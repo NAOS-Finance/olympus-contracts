@@ -30,14 +30,13 @@ contract CustomBond is OlympusAccessControlled {
     IERC20Metadata immutable principalToken; // inflow token
     ICustomTreasury immutable customTreasury; // pays for and receives principal
     address immutable olympusDAO;
-    address olympusTreasury; // receives fee
+    address olympusTreasury;
 
     uint public totalPrincipalBonded;
     uint public totalPayoutGiven;
     
     Terms public terms; // stores terms for new bonds
     Adjust public adjustment; // stores adjustment to BCV data
-    FeeTiers[] private feeTiers; // stores fee tiers
 
     mapping( address => Bond ) public bondInfo; // stores bond information for depositors
 
@@ -48,11 +47,6 @@ contract CustomBond is OlympusAccessControlled {
     uint payoutSinceLastSubsidy; // principal accrued since subsidy paid
     
     /* ======== STRUCTS ======== */
-
-    struct FeeTiers {
-        uint tierCeilings; // principal bonded till next tier
-        uint fees; // in ten-thousandths (i.e. 33300 = 3.33%)
-    }
 
     // Info for creating new bonds
     struct Terms {
@@ -89,9 +83,7 @@ contract CustomBond is OlympusAccessControlled {
         address _olympusTreasury,
         address _subsidyRouter, 
         address _initialOwner, 
-        address _olympusDAO,
-        uint[] memory _tierCeilings, 
-        uint[] memory _fees
+        address _olympusDAO
     ) OlympusAccessControlled(IOlympusAuthority(_initialOwner)) {
         require( _customTreasury != address(0) );
         customTreasury = ICustomTreasury( _customTreasury );
@@ -105,14 +97,6 @@ contract CustomBond is OlympusAccessControlled {
         subsidyRouter = _subsidyRouter;
         require( _olympusDAO != address(0) );
         olympusDAO = _olympusDAO;
-        require(_tierCeilings.length == _fees.length, "tier length and fee length not the same");
-
-        for(uint i; i < _tierCeilings.length; i++) {
-            feeTiers.push( FeeTiers({
-                tierCeilings: _tierCeilings[i],
-                fees: _fees[i]
-            }));
-        }
     }
 
     /* ======== INITIALIZATION ======== */
@@ -236,9 +220,6 @@ contract CustomBond is OlympusAccessControlled {
         require( payout >= 10 ** payoutToken.decimals() / 100, "Bond too small" ); // must be > 0.01 payout token ( underflow protection )
         require( payout <= maxPayout(), "Bond too large"); // size protection because there is no slippage
 
-        // profits are calculated
-        uint fee = payout.mul( currentOlympusFee() ).div( 1e6 );
-
         /**
             principal is transferred in
             approved and
@@ -248,16 +229,12 @@ contract CustomBond is OlympusAccessControlled {
         principalToken.approve( address(customTreasury), _amount );
         customTreasury.deposit( address(principalToken), _amount, payout );
         
-        if ( fee != 0 ) { // fee is transferred to dao 
-            payoutToken.transfer(olympusTreasury, fee);
-        }
-        
         // total debt is increased
         totalDebt = totalDebt.add( value );
                 
         // depositor info is stored
         bondInfo[ _depositor ] = Bond({ 
-            payout: bondInfo[ _depositor ].payout.add( payout.sub(fee) ),
+            payout: bondInfo[ _depositor ].payout.add( payout ),
             vesting: terms.vestingTerm,
             lastBlock: block.number,
             truePricePaid: trueBondPrice()
@@ -373,7 +350,7 @@ contract CustomBond is OlympusAccessControlled {
      *  @return price_ uint
      */
     function trueBondPrice() public view returns ( uint price_ ) {
-        price_ = bondPrice().add(bondPrice().mul( currentOlympusFee() ).div( 1e6 ) );
+        price_ = bondPrice();
     }
 
     /**
@@ -394,13 +371,13 @@ contract CustomBond is OlympusAccessControlled {
     }
 
     /**
-     *  @notice calculate user's interest due for new bond, accounting for Olympus Fee
+     *  @notice calculate user's interest due for new bond
      *  @param _value uint
      *  @return uint
      */
     function payoutFor( uint _value ) external view returns ( uint ) {
         uint total = FixedPoint.fraction( _value, bondPrice() ).decode112with18().div( 1e11 );
-        return total.sub(total.mul( currentOlympusFee() ).div( 1e6 ));
+        return total;
     }
 
     /**
@@ -466,19 +443,6 @@ contract CustomBond is OlympusAccessControlled {
             pendingPayout_ = payout;
         } else {
             pendingPayout_ = payout.mul( percentVested ).div( 10000 );
-        }
-    }
-
-    /**
-     *  @notice current fee Olympus takes of each bond
-     *  @return currentFee_ uint
-     */
-    function currentOlympusFee() public view returns( uint currentFee_ ) {
-        uint tierLength = feeTiers.length;
-        for(uint i; i < tierLength; i++) {
-            if(totalPrincipalBonded < feeTiers[i].tierCeilings || i == tierLength - 1 ) {
-                return feeTiers[i].fees;
-            }
         }
     }
     
