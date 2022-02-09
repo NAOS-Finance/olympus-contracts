@@ -29,8 +29,6 @@ contract CustomBond is OlympusAccessControlled {
     IERC20Metadata immutable payoutToken; // token paid for principal
     IERC20Metadata immutable principalToken; // inflow token
     ICustomTreasury immutable customTreasury; // pays for and receives principal
-    address immutable olympusDAO;
-    address olympusTreasury;
 
     uint public totalPrincipalBonded;
     uint public totalPayoutGiven;
@@ -42,9 +40,6 @@ contract CustomBond is OlympusAccessControlled {
 
     uint public totalDebt; // total value of outstanding bonds; used for pricing
     uint public lastDecay; // reference block for debt decay
-
-    address immutable subsidyRouter; // pays subsidy in OHM to custom treasury
-    uint payoutSinceLastSubsidy; // principal accrued since subsidy paid
     
     /* ======== STRUCTS ======== */
 
@@ -80,10 +75,7 @@ contract CustomBond is OlympusAccessControlled {
         address _customTreasury, 
         address _payoutToken, 
         address _principalToken, 
-        address _olympusTreasury,
-        address _subsidyRouter, 
-        address _initialOwner, 
-        address _olympusDAO
+        address _initialOwner
     ) OlympusAccessControlled(IOlympusAuthority(_initialOwner)) {
         require( _customTreasury != address(0) );
         customTreasury = ICustomTreasury( _customTreasury );
@@ -91,12 +83,6 @@ contract CustomBond is OlympusAccessControlled {
         payoutToken = IERC20Metadata( _payoutToken );
         require( _principalToken != address(0) );
         principalToken = IERC20Metadata( _principalToken );
-        require( _olympusTreasury != address(0) );
-        olympusTreasury = _olympusTreasury;
-        require( _subsidyRouter != address(0) );
-        subsidyRouter = _subsidyRouter;
-        require( _olympusDAO != address(0) );
-        olympusDAO = _olympusDAO;
     }
 
     /* ======== INITIALIZATION ======== */
@@ -174,26 +160,6 @@ contract CustomBond is OlympusAccessControlled {
             lastBlock: block.number
         });
     }
-
-    /**
-     *  @notice change address of Olympus Treasury
-     *  @param _olympusTreasury uint
-     */
-    function changeOlympusTreasury(address _olympusTreasury) external {
-        require( msg.sender == olympusDAO, "Only Olympus DAO" );
-        olympusTreasury = _olympusTreasury;
-    }
-
-    /**
-     *  @notice subsidy controller checks payouts since last subsidy and resets counter
-     *  @return payoutSinceLastSubsidy_ uint
-     */
-    function paySubsidy() external returns ( uint payoutSinceLastSubsidy_ ) {
-        require( msg.sender == subsidyRouter, "Only subsidy controller" );
-
-        payoutSinceLastSubsidy_ = payoutSinceLastSubsidy;
-        payoutSinceLastSubsidy = 0;
-    }
     
     /* ======== USER FUNCTIONS ======== */
     
@@ -246,7 +212,6 @@ contract CustomBond is OlympusAccessControlled {
 
         totalPrincipalBonded = totalPrincipalBonded.add(_amount); // total bonded increased
         totalPayoutGiven = totalPayoutGiven.add(payout); // total payout increased
-        payoutSinceLastSubsidy = payoutSinceLastSubsidy.add( payout ); // subsidy counter increased
 
         adjust(); // control variable is adjusted
         return payout; 
