@@ -73,7 +73,7 @@ contract CustomTreasury is OlympusAccessControlled {
      *  @param _destination address
      *  @param _amount uint
      */
-    function withdraw(address _token, address _destination, uint _amount) external onlyPolicy() {
+    function withdraw(address _token, address _destination, uint _amount) external onlyPolicy {
         IERC20Metadata(_token).safeTransfer(_destination, _amount);
 
         emit Withdraw(_token, _destination, _amount);
@@ -83,7 +83,7 @@ contract CustomTreasury is OlympusAccessControlled {
         @notice toggle bond contract
         @param _bondContract address
      */
-    function toggleBondContract(address _bondContract) external onlyPolicy() {
+    function toggleBondContract(address _bondContract) external onlyPolicy {
         bondContract[_bondContract] = !bondContract[_bondContract];
         emit BondContractToggled(_bondContract, bondContract[_bondContract]);
     }

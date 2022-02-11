@@ -56,7 +56,7 @@ const config: HardhatUserConfig = {
         },
         // Uncomment for testing. Commented due to CI issues
         // mainnet: getChainConfig("mainnet"),
-        // rinkeby: getChainConfig("rinkeby"),
+        rinkeby: getChainConfig("rinkeby"),
         // ropsten: getChainConfig("ropsten"),
     },
     paths: {
@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
         cache: "./cache",
         sources: "./contracts",
         tests: "./test",
-        deploy: "./scripts/deploy",
+        deploy: "./scripts/deploy_naos",
         deployments: "./deployments",
     },
     solidity: {

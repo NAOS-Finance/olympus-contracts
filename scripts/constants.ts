@@ -13,6 +13,15 @@ export const CONTRACTS: Record<string, string> = {
     FRAX: "Frax",
     DAI: "DAI",
     lusdAllocator: "LUSDAllocator",
+    customTreasury: "CustomTreasury",
+    customBond: "CustomBond",
+};
+
+export const ADDRESS_BOOK: Record<number, Record<string, string>> = {
+    4: {
+        NAOS: '0xc83e6391dccf286ca64e67bac361faba69a48a61',
+        LP: '0xfe69cb13a0435f60783a54c18c011d88a6e770d0'
+    }
 };
 
 // Constructor Arguments

@@ -40,6 +40,7 @@ contract CustomBond is OlympusAccessControlled {
 
     uint public totalDebt; // total value of outstanding bonds; used for pricing
     uint public lastDecay; // reference block for debt decay
+    bool public initialized; // initialized
     
     /* ======== STRUCTS ======== */
 
@@ -103,8 +104,11 @@ contract CustomBond is OlympusAccessControlled {
         uint _maxPayout,
         uint _maxDebt,
         uint _initialDebt
-    ) external onlyPolicy() {
-        require( currentDebt() == 0, "Debt must be 0 for initialization" );
+    ) external onlyPolicy {
+        require( initialized == false, "initialized" );
+        require( _vestingTerm >= 10000, "Vesting must be longer than 36 hours" );
+        require( _maxPayout <= 1000, "Payout cannot be above 1 percent" );
+        initialized = true;
         terms = Terms ({
             controlVariable: _controlVariable,
             vestingTerm: _vestingTerm,
@@ -125,7 +129,7 @@ contract CustomBond is OlympusAccessControlled {
      *  @param _parameter PARAMETER
      *  @param _input uint
      */
-    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyPolicy() {
+    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyPolicy {
         if ( _parameter == PARAMETER.VESTING ) { // 0
             require( _input >= 10000, "Vesting must be longer than 36 hours" );
             terms.vestingTerm = _input;
@@ -149,7 +153,7 @@ contract CustomBond is OlympusAccessControlled {
         uint _increment, 
         uint _target,
         uint _buffer 
-    ) external onlyPolicy() {
+    ) external onlyPolicy {
         require( _increment <= terms.controlVariable.mul( 30 ).div( 1000 ), "Increment too large" );
 
         adjustment = Adjust({
