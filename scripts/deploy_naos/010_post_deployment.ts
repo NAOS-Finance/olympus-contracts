@@ -31,7 +31,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     // console.log("Setup -- authorityContract.pushVault: set vault on authority");
 
     // Step 2: Initialize bond
-    if ((await bond.totalDebt()).eq(0)) {
+    if (!(await bond.initialized())) {
         await waitFor(bond.initializeBond(
             115000,
             46200,
