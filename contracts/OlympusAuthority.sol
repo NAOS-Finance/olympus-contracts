@@ -32,12 +32,16 @@ contract OlympusAuthority is IOlympusAuthority, OlympusAccessControlled {
         address _policy,
         address _vault
     ) OlympusAccessControlled(IOlympusAuthority(address(this))) {
+        require( _governor != address(0) );
         governor = _governor;
         emit GovernorPushed(address(0), governor, true);
+        require( _guardian != address(0) );
         guardian = _guardian;
         emit GuardianPushed(address(0), guardian, true);
+        require( _policy != address(0) );
         policy = _policy;
         emit PolicyPushed(address(0), policy, true);
+        require( _vault != address(0) );
         vault = _vault;
         emit VaultPushed(address(0), vault, true);
     }
