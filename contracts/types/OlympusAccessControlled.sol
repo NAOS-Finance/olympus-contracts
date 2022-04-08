@@ -17,6 +17,7 @@ abstract contract OlympusAccessControlled {
     /* ========== Constructor ========== */
 
     constructor(IOlympusAuthority _authority) {
+        require( address(_authority) != address(0) );
         authority = _authority;
         emit AuthorityUpdated(_authority);
     }
