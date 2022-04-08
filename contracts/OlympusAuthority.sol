@@ -49,24 +49,28 @@ contract OlympusAuthority is IOlympusAuthority, OlympusAccessControlled {
     /* ========== GOV ONLY ========== */
 
     function pushGovernor(address _newGovernor, bool _effectiveImmediately) external onlyGovernor {
+        require( _newGovernor != address(0) );
         if (_effectiveImmediately) governor = _newGovernor;
         newGovernor = _newGovernor;
         emit GovernorPushed(governor, newGovernor, _effectiveImmediately);
     }
 
     function pushGuardian(address _newGuardian, bool _effectiveImmediately) external onlyGovernor {
+        require( _newGuardian != address(0) );
         if (_effectiveImmediately) guardian = _newGuardian;
         newGuardian = _newGuardian;
         emit GuardianPushed(guardian, newGuardian, _effectiveImmediately);
     }
 
     function pushPolicy(address _newPolicy, bool _effectiveImmediately) external onlyGovernor {
+        require( _newPolicy != address(0) );
         if (_effectiveImmediately) policy = _newPolicy;
         newPolicy = _newPolicy;
         emit PolicyPushed(policy, newPolicy, _effectiveImmediately);
     }
 
     function pushVault(address _newVault, bool _effectiveImmediately) external onlyGovernor {
+        require( _newVault != address(0) );
         if (_effectiveImmediately) vault = _newVault;
         newVault = _newVault;
         emit VaultPushed(vault, newVault, _effectiveImmediately);
