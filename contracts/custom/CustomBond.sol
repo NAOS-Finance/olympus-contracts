@@ -232,7 +232,7 @@ contract CustomBond is OlympusAccessControlled {
         if ( percentVested >= 10000 ) { // if fully vested
             delete bondInfo[ _depositor ]; // delete user info
             emit BondRedeemed( _depositor, info.payout, 0 ); // emit bond data
-            require( payoutToken.transfer( _depositor, info.payout ) );
+            require( payoutToken.transfer( _depositor, info.payout ) , "failed to redeem token");
             return info.payout;
 
         } else { // if unfinished
@@ -248,7 +248,7 @@ contract CustomBond is OlympusAccessControlled {
             });
 
             emit BondRedeemed( _depositor, payout, bondInfo[ _depositor ].payout );
-            require( payoutToken.transfer( _depositor, payout ) );
+            require( payoutToken.transfer( _depositor, payout ) , "failed to redeem token");
             return payout;
         }
         
